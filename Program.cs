@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using ProcessMonitor.App;
+using System.Text;
 using System.Text.Json;
 class Program
 {
@@ -7,11 +8,17 @@ class Program
         var apiKey = Environment.GetEnvironmentVariable("ApiKey");
 
         using var httpClient = new HttpClient();
+
         httpClient.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
 
-        string analyzeUrl = "https://localhost:7023/v1/processmonitor/analyze";
-        string historyUrl = "https://localhost:7023/v1/processmonitor/history";
-        string summaryUrl = "https://localhost:7023/v1/processmonitor/summary";
+        //Docker
+        string baseUrl = "http://localhost:8080/v1/processmonitor";
+        //Traditional deployment
+        // string baseUrl = "https://localhost:7023/v1/processmonitor";
+
+        string analyzeUrl = $"{baseUrl}/analyze";
+        string historyUrl = $"{baseUrl}/history";
+        string summaryUrl = $"{baseUrl}/summary";      
 
         Console.WriteLine("=== Process Monitor Console Client ===");
 
@@ -97,45 +104,59 @@ class Program
 
     static async Task GetHistoryAsync(HttpClient httpClient, string apiUrl)
     {
-        try
+        int page = 1;
+        int pageSize = 2;
+
+        while (true)
         {
-            Console.WriteLine("\nRequesting History...\n");
-
-            var response = await httpClient.GetAsync(apiUrl);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync();
+            string urlWithParams = $"{apiUrl}?Page={page}&PageSize={pageSize}";
 
             try
             {
-                var items = JsonSerializer.Deserialize<List<JsonElement>>(json);
+                var response = await httpClient.GetAsync(urlWithParams);
+                response.EnsureSuccessStatusCode();
 
-                Console.WriteLine("=== History ===");
+                var json = await response.Content.ReadAsStringAsync();
 
-                foreach (var item in items)
+                var paged = JsonSerializer.Deserialize<PaginatedResponse<JsonElement>>(json);
+
+                if (paged == null || paged.Items == null || paged.Items.Count == 0)
                 {
-                    string pretty = JsonSerializer.Serialize(
-                        item,
-                        new JsonSerializerOptions { WriteIndented = true }
-                    );
+                    Console.WriteLine("\nNo more history items.");
+                    break;
+                }
 
+                Console.WriteLine($"\n=== History Page {paged.Page} of {paged.TotalPages} ===");
+
+                foreach (var item in paged.Items)
+                {
+                    string pretty = JsonSerializer.Serialize(item, new JsonSerializerOptions { WriteIndented = true });
                     Console.WriteLine(pretty);
                     Console.WriteLine();
                 }
 
-                return;
+                // Ask user if they want next page
+                if (paged.Page >= paged.TotalPages)
+                {
+                    Console.WriteLine("End of history.");
+                    break;
+                }
+
+                Console.Write("Press Enter for next page, or type 'stop' to return to menu: ");
+                string input = Console.ReadLine()?.Trim();
+                if (string.Equals(input, "stop", StringComparison.OrdinalIgnoreCase))
+                    break;
+
+                page++; // next page
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine("=== History (raw) ===");
-                Console.WriteLine(json);
+                Console.WriteLine("Error: " + ex.Message);
+                break;
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error: " + ex.Message);
         }
     }
+
 
 
     static async Task GetSummaryAsync(HttpClient httpClient, string apiUrl)
