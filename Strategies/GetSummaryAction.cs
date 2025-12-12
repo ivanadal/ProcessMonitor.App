@@ -11,7 +11,13 @@ namespace ProcessMonitor.App.Strategies
         public async Task ExecuteAsync(ApiClient client)
         {
             var response = await client.GetAsync("summary");
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine(response.StatusCode + ", error:" + error);
+            
+            }
 
             var json = await response.Content.ReadAsStringAsync();
             Console.WriteLine("\n=== Summary ===");

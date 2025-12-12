@@ -18,7 +18,13 @@ namespace ProcessMonitor.App.Strategies
             while (true)
             {
                 var response = await client.GetAsync($"history?Page={page}&PageSize={pageSize}");
-                response.EnsureSuccessStatusCode();
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+
+                    Console.WriteLine(response.StatusCode + ", error:" + error);
+                    break;
+                }
 
                 var json = await response.Content.ReadAsStringAsync();
                 var data = JsonSerializer.Deserialize<PaginatedResponse<JsonElement>>(json);
@@ -40,6 +46,7 @@ namespace ProcessMonitor.App.Strategies
                 Console.Write("Press Enter to continue, 'stop' to exit: ");
                 if (Console.ReadLine()?.Trim().ToLower() == "stop") return;
                 page++;
+                
             }
         }
     }

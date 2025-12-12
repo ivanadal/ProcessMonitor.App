@@ -16,18 +16,25 @@ namespace ProcessMonitor.App.Strategies
             Console.Write("Enter Guideline: ");
             var guideline = Console.ReadLine()?.Trim();
 
-            if (string.IsNullOrWhiteSpace(action) || string.IsNullOrWhiteSpace(guideline))
-            {
-                Console.WriteLine("Action and guideline are required.");
-                return;
-            }
+            //if (string.IsNullOrWhiteSpace(action) || string.IsNullOrWhiteSpace(guideline))
+            //{
+            //    Console.WriteLine("Action and guideline are required.");
+            //    return;
+            //}
 
             var response = await client.PostAsync("analyze", new { action, guideline });
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
 
-            var result = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("\n=== Analyze Result ===");
-            Console.WriteLine(result);
+                Console.WriteLine(response.StatusCode+", error:"+error);
+            }
+            else
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                Console.WriteLine("\n=== Analyze Result ===");
+                Console.WriteLine(result);
+            }
         }
     }
 }
