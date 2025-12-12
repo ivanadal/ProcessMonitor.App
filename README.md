@@ -11,6 +11,7 @@ A simple console client for interacting with the **ProcessMonitor.API**. Allows 
   * Docker deployment (`http://localhost:8080/v1/processmonitor/...`)
   * Or traditional deployment (`https://localhost:7023/v1/processmonitor/...`)
 * Environment variable `ApiKey` must be set to match the API key configured in the API.
+* Environment variable for DOCKER deployment RUN_ENV=docker, if it is traditional then nothing should be added in environment variables.
 
 ```powershell
 # Windows PowerShell
@@ -51,14 +52,14 @@ Once the app starts, you will see a menu:
 
 ```
 1) Analyze
-2) Get History
-3) Get Summary
+2) History
+3) Summary
 0) Exit
 ```
 
 * **Analyze:** Submit a new action and guideline for evaluation.
-* **Get History:** Paginated list of previous analyses.
-* **Get Summary:** Aggregated statistics over all stored analyses.
+* **History:** Paginated list of previous analyses.
+* **Summary:** Aggregated statistics over all stored analyses.
 
 ---
 
@@ -66,20 +67,18 @@ Once the app starts, you will see a menu:
 
 The console app uses **different URLs depending on deployment**:
 
+This is defined within ApiConfig, and can be changed there. If DOCKER is used, it is expected to set environment variable like this: RUN_ENV=docker, if it is traditional then nothing should be added in environment variables.
+
 * **Docker:**
 
 ```csharp
-http://localhost:8080/v1/processmonitor/analyze
-http://localhost:8080/v1/processmonitor/history
-http://localhost:8080/v1/processmonitor/summary
+http://localhost:8080/v1/processmonitor/
 ```
 
 * **Traditional / local:**
 
 ```csharp
-https://localhost:7023/v1/processmonitor/analyze
-https://localhost:7023/v1/processmonitor/history
-https://localhost:7023/v1/processmonitor/summary
+https://localhost:7023/v1/processmonitor/
 ```
 
 Make sure the `ApiKey` environment variable matches the API key expected by the API (`X-Api-Key` header).

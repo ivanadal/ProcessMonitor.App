@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace ProcessMonitor.App
+namespace ProcessMonitor.App.Models
 {
     public class PaginatedResponse<T>
     {
